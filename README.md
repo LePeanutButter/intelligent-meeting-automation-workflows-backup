@@ -12,7 +12,6 @@ This repository contains a complete implementation and documentation for an **in
 - [Install](#install)
 - [Usage](#usage)
   - [Workflow Overview](#workflow-overview)
-  - [Demo Video](#demo-video)
 - [Contributors](#contributors)
 - [License](#license)
 
@@ -90,15 +89,6 @@ You are a professional meeting assistant. Analyze the transcript and produce a s
 - Tentative Due Dates
 Format output in Markdown for HTML conversion. Assign tasks if missing and estimate deadlines.
 ```
-
-## Demo Video
-
-Here is a demonstration of the intelligent meeting automation workflow implemented in n8n:
-
-<video width="720" height="480" controls>
-    <source src="docs/media/meeting_workflow_demo.webm" type="video/webm">
-    Your browser does not support the video tag.
-</video>
 
 ## Contributors
 
