@@ -1,0 +1,2 @@
+workflows/*.json linguist-language=TypeScript
+credentials/*.json linguist-documentation
