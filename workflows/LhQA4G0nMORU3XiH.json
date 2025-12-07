@@ -1,0 +1,432 @@
+{
+  "name": "Create meeting summaries from Meeting Transcripts with Gemini and sent to email",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Create Project Summary from meeting transcript\n\nThis workflow will pick the transcript from the GoogleDocs file and generate meeting summary and sends a email with the summary and the tasks defined in the meeting",
+        "height": 688,
+        "width": 1792,
+        "color": 4
+      },
+      "id": "1d4d07c6-1521-47ff-8247-08682961dbd3",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        256,
+        96
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "documentURL": "={{ $json.id || $json[\"Transcription document URL\"]}}"
+      },
+      "id": "dc11f228-3544-482b-bcbd-94f3a11da60a",
+      "name": "Get meeting transcript",
+      "type": "n8n-nodes-base.googleDocs",
+      "position": [
+        512,
+        416
+      ],
+      "typeVersion": 2,
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "Qf5DQkM045bzHm6p",
+          "name": "Google Docs account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "8a926201-5dbb-4f29-bfc3-d498a0cdfdb7",
+      "name": "No Operation, do nothing",
+      "type": "n8n-nodes-base.noOp",
+      "position": [
+        1856,
+        416
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "formTitle": "Transcription text",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Transcription document URL",
+              "placeholder": "Google docs URL",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        288,
+        416
+      ],
+      "id": "802c4bf7-65f5-402b-8351-fa0f68071937",
+      "name": "On form submission",
+      "webhookId": "f832b657-df7b-45af-a0ee-49999ccc2d01"
+    },
+    {
+      "parameters": {
+        "options": {
+          "maxOutputTokens": 32768
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        864,
+        624
+      ],
+      "id": "cc1d2b30-21c7-48d2-89fa-2f82a1014128",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "H7CyAtAPQtgBrVtJ",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.send_to }}",
+        "subject": "={{ $('Convert Markdown to HTML').item.json.output.title }}",
+        "message": "={{ $('Convert Markdown to HTML').item.json.html_content }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1648,
+        416
+      ],
+      "id": "b456ac1d-5c19-4aca-b685-b42625ce9ff2",
+      "name": "Send a message",
+      "webhookId": "6dbb36a2-e25e-4622-956e-1dc4e5c924c6",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "Sgw8I74wArFVwWlF",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n\t\"title\": \"sample title\",\n\t\"text\": \"sample text\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1104,
+        624
+      ],
+      "id": "4f425717-e1c9-46e7-875e-146071a890c2",
+      "name": "JSON Parser"
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "triggerOn": "specificFolder",
+        "folderToWatch": {
+          "__rl": true,
+          "value": "1Z6AX8Ku48YKrcKLcvZZpkNyxX59_2aI2",
+          "mode": "list",
+          "cachedResultName": "Transcriptions",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1Z6AX8Ku48YKrcKLcvZZpkNyxX59_2aI2"
+        },
+        "event": "fileCreated",
+        "options": {
+          "fileType": "application/vnd.google-apps.document"
+        }
+      },
+      "type": "n8n-nodes-base.googleDriveTrigger",
+      "typeVersion": 1,
+      "position": [
+        288,
+        576
+      ],
+      "id": "7216443f-a1c9-4b99-b0ff-bdfcef9f928d",
+      "name": "Google Drive Trigger",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "iWm6WrCVZZ3WfyTi",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "meeting-transcript",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        288,
+        256
+      ],
+      "id": "99f275ba-e715-4a07-a0d7-deb1c95aaaf3",
+      "name": "Bluedot Webhook",
+      "webhookId": "aa7a3362-9df1-4868-bb6a-1d975c52b119"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Loop over input items and add a new field called 'myNewField' to the JSON of each one\n// Remove the word \"Speaker: \" and format transcript\nconst formattedTranscript = $input.first().json.body.transcript\n  .map(entry => {\n    const name = entry.speaker.replace(\"Speaker: \", \"\"); // keep only \"A\" or \"B\"\n    return `${name}: ${entry.text}`;\n  })\n  .join(\"\\n\");\n\nconsole.log(formattedTranscript);\n\nreturn {text: formattedTranscript}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        512,
+        256
+      ],
+      "id": "e29b8263-70ba-43df-8aa8-99b714d31325",
+      "name": "Format webhook transcription"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c6d7b33c-d900-47dc-83c2-0ab5b8ae55dc",
+              "name": "transcription",
+              "value": "={{ $json.content || $json.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        752,
+        416
+      ],
+      "id": "07d5cab5-46a7-44ab-934f-7c86562ae5a4",
+      "name": "Centralize triggers data"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a professional meeting assistant and project manager. \nYour task is to analyze a meeting transcript and provide a structured output with:  \n- Meeting Summary  \n- Action Items (tasks)  \n- Assigned Responsible(s)  \n- Tentative Due Dates  \n- Optional communication output  \n\nBe precise and step-by-step. Ensure clarity and actionable insights.\n\nToday's date is: {{ $today }}\n\nThis is the structure of the meeting summary we are expecting from you:\n\n# Meeting Summary\nSummarize the main discussion points of the meeting in 3–5 bullet points.  \nFocus on decisions made, topics covered, and important highlights.\n\n# Action Items\nList each task that came up in the meeting. Use this format:  \n\n1. **Task:** [Short action description]  \n   - **Responsible:** [Person or Role, assign if missing]  \n   - **Due Date:** [Specific date if mentioned, otherwise estimate based on context or suggest within 3–7 days]  \n\nRepeat for all tasks.  \n\n# Tentative Timeline\nIf the transcript mentions phases or deadlines, outline them in a simple table:  \n\nPhase | Activities | Tentative Date/Duration\n------|------------|------------------------\n[Phase 1] | [Describe activities] | [Date or duration]\n[Phase 2] | [Describe activities] | [Date or duration]\n\n---\n\nTranscript (use this to generate the structured output  raw JSON with a field `text` which is the  Markdown format, **without** code fences, and a `title` which summarizes the meeting):\n{{ $json.transcription }}",
+        "hasOutputParser": true
+      },
+      "id": "cd1b602e-5865-493d-bae7-c061f7581663",
+      "name": "Process meeting with LLM Agent",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "position": [
+        928,
+        416
+      ],
+      "typeVersion": 1.6
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e7ee03ac-13e3-4fca-a7bc-57c8fc56dc42",
+              "name": "send_to",
+              "type": "string",
+              "value": "=santiago.botero-g@mail.escuelaing.edu.co, luiggi.valencia-v@mail.escuelaing.edu.co,juan.rojas-o@mail.escuelaing.edu.co"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ca521d65-7a0d-4a63-a254-79073a2972ca",
+      "name": "Setup email  recipients",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        1456,
+        416
+      ],
+      "notesInFlow": true,
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "mode": "markdownToHtml",
+        "markdown": "={{ $json.output.text }}",
+        "destinationKey": "html_content",
+        "options": {
+          "emoji": true,
+          "tables": true
+        }
+      },
+      "id": "77200794-8d96-4785-94a9-6c68e9888c42",
+      "name": "Convert Markdown to HTML",
+      "type": "n8n-nodes-base.markdown",
+      "position": [
+        1264,
+        416
+      ],
+      "typeVersion": 1
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Get meeting transcript": {
+      "main": [
+        [
+          {
+            "node": "Centralize triggers data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Get meeting transcript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Process meeting with LLM Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "No Operation, do nothing": {
+      "main": [
+        []
+      ]
+    },
+    "JSON Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Process meeting with LLM Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Drive Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get meeting transcript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Bluedot Webhook": {
+      "main": [
+        [
+          {
+            "node": "Format webhook transcription",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format webhook transcription": {
+      "main": [
+        [
+          {
+            "node": "Centralize triggers data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Centralize triggers data": {
+      "main": [
+        [
+          {
+            "node": "Process meeting with LLM Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process meeting with LLM Agent": {
+      "main": [
+        [
+          {
+            "node": "Convert Markdown to HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Setup email  recipients": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert Markdown to HTML": {
+      "main": [
+        [
+          {
+            "node": "Setup email  recipients",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "versionId": "0dc78c08-a3be-49f8-add1-9b5375c9024f",
+  "meta": {
+    "templateId": "6177",
+    "templateCredsSetupCompleted": true,
+    "instanceId": "5f2d8c622d7cc5166d9fd9e3e3a69d1c9db3439849cc2f58a029dcb88b4f9e2d"
+  },
+  "id": "LhQA4G0nMORU3XiH",
+  "tags": []
+}
